@@ -1,361 +1,263 @@
-<!DOCTYPE HTML>
-<!--
-	Dimension by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
-<html>
-	<head>
-		<title>Dimension by HTML5 UP</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
-	</head>
-	<body class="is-preload">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DinoHH | Studio Index</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;600&family=Noto+Sans+SC:wght@100;400;700&display=swap');
+        
+        :root { --neon-green: #c1ff72; --deep-black: #0a0a0a; }
 
-		<!-- Wrapper -->
-			<div id="wrapper">
+        body {
+            background-color: var(--deep-black); color: #fff;
+            font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+            margin: 0; overflow-x: hidden; cursor: crosshair;
+        }
 
-				<!-- Header -->
-					<header id="header">
-						<div class="logo">
-							<span class="icon fa-gem"></span>
-						</div>
-						<div class="content">
-							<div class="inner">
-								<h1>DinoHH</h1>
-								<p>the mountains are calling and I must go ! </p>
-							</div>
-						</div>
-						<nav>
-							<ul>
-								<li><a href="#intro">Intro</a></li>
-								<li><a href="#work">Work</a></li>
-								<li><a href="#about">About</a></li>
-								<li><a href="#contact">Contact</a></li>
-								<!--<li><a href="#elements">Elements</a></li>-->
-							</ul>
-						</nav>
-					</header>
+        /* 顶部导航：Logo & 社媒 */
+        header {
+            position: fixed; top: 0; width: 100%; padding: 40px 60px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 500; 
+            background: linear-gradient(to bottom, rgba(10,10,10,1) 0%, rgba(10,10,10,0) 100%);
+        }
 
-				<!-- Main -->
-					<div id="main">
+        .logo-btn { 
+            font-size: 1.6rem; font-weight: 600; letter-spacing: 0.25em; 
+            color: var(--neon-green); cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        .logo-btn:hover { opacity: 0.6; filter: drop-shadow(0 0 8px var(--neon-green)); }
 
-						<!-- Intro -->
-							<article id="intro">
-								<h2 class="major">Intro</h2>
-								<span class="image main"><img src="images/pic01.jpg" alt="" /></span>
-								<p>Aenean ornare velit lacus, ac varius enim ullamcorper eu. Proin aliquam facilisis ante interdum congue. Integer mollis, nisl amet convallis, porttitor magna ullamcorper, amet egestas mauris. Ut magna finibus nisi nec lacinia. Nam maximus erat id euismod egestas. By the way, check out my <a href="#projects">awesome work</a>.</p>
-								<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis dapibus rutrum facilisis. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Etiam tristique libero eu nibh porttitor fermentum. Nullam venenatis erat id vehicula viverra. Nunc ultrices eros ut ultricies condimentum. Mauris risus lacus, blandit sit amet venenatis non, bibendum vitae dolor. Nunc lorem mauris, fringilla in aliquam at, euismod in lectus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In non lorem sit amet elit placerat maximus. Pellentesque aliquam maximus risus, vel sed vehicula.</p>
-							</article>
+        .social-icons a {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(193, 255, 114, 0.2);
+            transition: all 0.3s ease; margin-left: 15px;
+        }
+        .social-icons a:hover {
+            border-color: var(--neon-green);
+            background: rgba(193, 255, 114, 0.1);
+            filter: drop-shadow(0 0 5px var(--neon-green));
+        }
+        .social-icons svg { width: 16px; height: 16px; fill: var(--neon-green); }
 
-						<!-- Work -->
-							<article id="work">
-								<h2 class="major">Work</h2>
-								<span class="image main"><img src="images/pic02.jpg" alt="" /></span>
-								<p>Adipiscing magna sed dolor elit. Praesent eleifend dignissim arcu, at eleifend sapien imperdiet ac. Aliquam erat volutpat. Praesent urna nisi, fringila lorem et vehicula lacinia quam. Integer sollicitudin mauris nec lorem luctus ultrices.</p>
-								<p>Nullam et orci eu lorem consequat tincidunt vivamus et sagittis libero. Mauris aliquet magna magna sed nunc rhoncus pharetra. Pellentesque condimentum sem. In efficitur ligula tate urna. Maecenas laoreet massa vel lacinia pellentesque lorem ipsum dolor. Nullam et orci eu lorem consequat tincidunt. Vivamus et sagittis libero. Mauris aliquet magna magna sed nunc rhoncus amet feugiat tempus.</p>
-							</article>
+        /* 遮罩层核心控制 */
+        .full-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--deep-black); z-index: 1000;
+            transform: translateY(-100%);
+            visibility: hidden;
+            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1), visibility 0s 0.8s;
+            display: flex; align-items: start; justify-content: center; overflow-y: auto;
+            padding-top: 150px;
+        }
+        .full-overlay.active {
+            transform: translateY(0);
+            visibility: visible;
+            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1), visibility 0s 0s;
+        }
 
-						<!-- About -->
-							<article id="about">
-								<h2 class="major">About</h2>
-								<span class="image main"><img src="images/pic03.jpg" alt="" /></span>
-								<p>Lorem ipsum dolor sit amet, consectetur et adipiscing elit. Praesent eleifend dignissim arcu, at eleifend sapien imperdiet ac. Aliquam erat volutpat. Praesent urna nisi, fringila lorem et vehicula lacinia quam. Integer sollicitudin mauris nec lorem luctus ultrices. Aliquam libero et malesuada fames ac ante ipsum primis in faucibus. Cras viverra ligula sit amet ex mollis mattis lorem ipsum dolor sit amet.</p>
-							</article>
+        /* 首页列表项交互 */
+        .nav-item {
+            position: relative; z-index: 10; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1); cursor: pointer;
+        }
+        .nav-item .description {
+            max-height: 0; opacity: 0; overflow: hidden;
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1); transform: translateY(10px);
+        }
+        .nav-item:hover { border-bottom: 1px solid var(--neon-green); padding-left: 20px; }
+        .nav-item:hover .description { max-height: 200px; opacity: 1; transform: translateY(0); padding-top: 25px; }
 
-						<!-- Contact -->
-							<article id="contact">
-								<h2 class="major">Contact</h2>
-								<form method="post" action="#">
-									<div class="fields">
-										<div class="field half">
-											<label for="name">Name</label>
-											<input type="text" name="name" id="name" />
-										</div>
-										<div class="field half">
-											<label for="email">Email</label>
-											<input type="text" name="email" id="email" />
-										</div>
-										<div class="field">
-											<label for="message">Message</label>
-											<textarea name="message" id="message" rows="4"></textarea>
-										</div>
-									</div>
-									<ul class="actions">
-										<li><input type="submit" value="Send Message" class="primary" /></li>
-										<li><input type="reset" value="Reset" /></li>
-									</ul>
-								</form>
-								<ul class="icons">
-									<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-									<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-									<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-									<li><a href="#" class="icon brands fa-github"><span class="label">GitHub</span></a></li>
-								</ul>
-							</article>
+        .nav-img {
+            position: fixed; top: 50%; right: 10%; transform: translate(0, -45%) scale(0.9);
+            width: 35vw; height: 50vh; object-fit: cover; opacity: 0;
+            transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1); pointer-events: none;
+            z-index: 5; filter: saturate(0) brightness(0.6); border-left: 1px solid var(--neon-green);
+        }
+        .nav-item:hover .nav-img { opacity: 0.6; transform: translate(0, -50%) scale(1); }
 
-						<!-- Elements -->
-							<article id="elements">
-								<h2 class="major">Elements</h2>
+        .neon-text { color: var(--neon-green); }
+        .eng-sub { font-size: 11px; letter-spacing: 0.4em; color: rgba(255, 255, 255, 0.3); text-transform: uppercase; }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 0; pointer-events: none; }
+    </style>
+</head>
+<body>
 
-								<section>
-									<h3 class="major">Text</h3>
-									<p>This is <b>bold</b> and this is <strong>strong</strong>. This is <i>italic</i> and this is <em>emphasized</em>.
-									This is <sup>superscript</sup> text and this is <sub>subscript</sub> text.
-									This is <u>underlined</u> and this is code: <code>for (;;) { ... }</code>. Finally, <a href="#">this is a link</a>.</p>
-									<hr />
-									<h2>Heading Level 2</h2>
-									<h3>Heading Level 3</h3>
-									<h4>Heading Level 4</h4>
-									<h5>Heading Level 5</h5>
-									<h6>Heading Level 6</h6>
-									<hr />
-									<h4>Blockquote</h4>
-									<blockquote>Fringilla nisl. Donec accumsan interdum nisi, quis tincidunt felis sagittis eget tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan faucibus. Vestibulum ante ipsum primis in faucibus lorem ipsum dolor sit amet nullam adipiscing eu felis.</blockquote>
-									<h4>Preformatted</h4>
-									<pre><code>i = 0;
+    <div id="about-overlay" class="full-overlay">
+        <div class="max-w-4xl text-center space-y-12 p-10">
+            <h2 class="text-6xl font-bold neon-text uppercase">DinoHH</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-left border-t border-white/10 pt-12">
+                <div class="space-y-4">
+                    <h3 class="neon-text text-xs tracking-widest uppercase">About / 关于</h3>
+                    <p class="text-sm leading-relaxed opacity-60">由独立设计师创立于 2024 年，致力于探索自然景观与设计的交界。通过 3D 建模、AR 技术与文创周边，重新定义人类与山脉的连接方式。</p>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="neon-text text-xs tracking-widest uppercase">Target / 目标</h3>
+                    <p class="text-sm leading-relaxed opacity-60">2026年，将持续更新 此生必徒 系列产品，并探索 AR 与户外交互的无限可能。</p>
+                </div>
+            </div>
+            <button onclick="closeAllOverlays()" class="px-8 py-3 border border-neon-green neon-text text-xs uppercase tracking-widest hover:bg-[#c1ff72] hover:text-black transition-all">Close / 关闭</button>
+        </div>
+    </div>
 
-while (!deck.isInOrder()) {
-    print 'Iteration ' + i;
-    deck.shuffle();
-    i++;
-}
+    <div id="detail-overlay" class="full-overlay">
+        <div class="w-full max-w-6xl p-10">
+            <nav class="mb-12">
+                <button onclick="closeAllOverlays()" class="border border-neon-green px-6 py-2 text-xs neon-text tracking-widest uppercase hover:bg-[#c1ff72] hover:text-black transition-all">← Back / 返回首页</button>
+            </nav>
+            <header class="mb-16">
+                <span id="detail-tag" class="neon-text text-xs tracking-[0.5em] uppercase">Category</span>
+                <h2 id="detail-title" class="text-6xl font-bold mt-4 mb-2 uppercase">Title</h2>
+                <p id="detail-sub" class="opacity-40 text-sm tracking-widest uppercase">Subtext</p>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 pb-40" id="detail-content"></div>
+        </div>
+    </div>
 
-print 'It took ' + i + ' iterations to sort the deck.';</code></pre>
-								</section>
+    <header>
+        <div class="logo-btn" onclick="openOverlay('about-overlay')">DinoHH</div>
+        
+        <div class="social-icons flex items-center">
+            <a href="https://s.taobao.com/search?q=DinoHH" target="_blank" title="淘宝 / Taobao">
+                <svg viewBox="0 0 1024 1024"><path d="M512 0a512 512 0 1 0 512 512A512 512 0 0 0 512 0zm213.3 640a128 128 0 1 1-128-128 128 128 0 0 1 128 128zm-256-128a128 128 0 1 1-128-128 128 128 0 0 1 128 128z"/></svg>
+            </a>
+            <a href="https://www.xiaohongshu.com/search_result?keyword=DinoHH" target="_blank" title="小红书 / Red">
+                <svg viewBox="0 0 1024 1024"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 640c-106 0-192-86-192-192s86-192 192-192 192 86 192 192-86 192-192 192z"/></svg>
+            </a>
+            <a href="https://www.douyin.com/search/DinoHH" target="_blank" title="抖音 / TikTok">
+                <svg viewBox="0 0 1024 1024"><path d="M512 1024C229.2 1024 0 794.8 0 512S229.2 0 512 0s512 229.2 512 512-229.2 512-512 512zm256-512h-128v192c0 35.3-28.7 64-64 64s-64-28.7-64-64 28.7-64 64-64h32v-128h-32c-106 0-192 86-192 192s86 192 192 192 192-86 192-192v-256z"/></svg>
+            </a>
+        </div>
+    </header>
 
-								<section>
-									<h3 class="major">Lists</h3>
+    <div id="canvas-container"></div>
 
-									<h4>Unordered</h4>
-									<ul>
-										<li>Dolor pulvinar etiam.</li>
-										<li>Sagittis adipiscing.</li>
-										<li>Felis enim feugiat.</li>
-									</ul>
+    <section class="relative h-screen w-full flex flex-col items-center justify-center z-10 text-center">
+        <h1 class="text-7xl md:text-9xl font-bold tracking-[0.6em] mb-8">DinoHH</h1>
+        <p class="eng-sub opacity-30">Outdoor Creative Studio</p>
+    </section>
 
-									<h4>Alternate</h4>
-									<ul class="alt">
-										<li>Dolor pulvinar etiam.</li>
-										<li>Sagittis adipiscing.</li>
-										<li>Felis enim feugiat.</li>
-									</ul>
+    <section class="relative z-10 px-10 md:px-32 pb-40 max-w-7xl">
+        
+        <div class="nav-item group py-20" onclick="showDetail('hike')">
+            <div class="flex flex-col">
+                <span class="text-[10px] neon-text mb-3 tracking-[0.5em]">01 / ARCHIVE</span>
+                <h2 class="text-5xl md:text-8xl font-bold uppercase">此生必徒</h2>
+                <div class="description max-w-xl">
+                    <p class="text-sm opacity-60 leading-relaxed mb-3">全球顶尖徒步路线档案。记录每一段通往未知的步伐。</p>
+                    <p class="eng-sub !tracking-widest">A curated archive of the world's iconic hiking routes.</p>
+                </div>
+            </div>
+            <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b" class="nav-img">
+        </div>
 
-									<h4>Ordered</h4>
-									<ol>
-										<li>Dolor pulvinar etiam.</li>
-										<li>Etiam vel felis viverra.</li>
-										<li>Felis enim feugiat.</li>
-										<li>Dolor pulvinar etiam.</li>
-										<li>Etiam vel felis lorem.</li>
-										<li>Felis enim et feugiat.</li>
-									</ol>
-									<h4>Icons</h4>
-									<ul class="icons">
-										<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-										<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-										<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-										<li><a href="#" class="icon brands fa-github"><span class="label">Github</span></a></li>
-									</ul>
+        <div class="nav-item group py-20" onclick="showDetail('peak')">
+            <div class="flex flex-col">
+                <span class="text-[10px] neon-text mb-3 tracking-[0.5em]">02 / COLLECTION</span>
+                <h2 class="text-5xl md:text-8xl font-bold uppercase">巅峰系列</h2>
+                <div class="description max-w-xl">
+                    <p class="text-sm opacity-60 leading-relaxed mb-3">已收集 18 座四千米级雪山，通过插画重构收藏山脉灵魂。</p>
+                    <p class="eng-sub !tracking-widest">Digitally reconstructed peak series products.</p>
+                </div>
+            </div>
+            <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba" class="nav-img">
+        </div>
 
-									<h4>Actions</h4>
-									<ul class="actions">
-										<li><a href="#" class="button primary">Default</a></li>
-										<li><a href="#" class="button">Default</a></li>
-									</ul>
-									<ul class="actions stacked">
-										<li><a href="#" class="button primary">Default</a></li>
-										<li><a href="#" class="button">Default</a></li>
-									</ul>
-								</section>
+        <div class="nav-item group py-20" onclick="showDetail('other')">
+            <div class="flex flex-col">
+                <span class="text-[10px] neon-text mb-3 tracking-[0.5em]">03 / EXPERIMENT</span>
+                <h2 class="text-5xl md:text-8xl font-bold uppercase">其他设计</h2>
+                <div class="description max-w-xl">
+                    <p class="text-sm opacity-60 leading-relaxed mb-3">品牌视觉实验、AR 交互项目及 DinoHH 的更多探索。</p>
+                    <p class="eng-sub !tracking-widest">Brand experiments and more explorations.</p>
+                </div>
+            </div>
+            <img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e" class="nav-img">
+        </div>
 
-								<section>
-									<h3 class="major">Table</h3>
-									<h4>Default</h4>
-									<div class="table-wrapper">
-										<table>
-											<thead>
-												<tr>
-													<th>Name</th>
-													<th>Description</th>
-													<th>Price</th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr>
-													<td>Item One</td>
-													<td>Ante turpis integer aliquet porttitor.</td>
-													<td>29.99</td>
-												</tr>
-												<tr>
-													<td>Item Two</td>
-													<td>Vis ac commodo adipiscing arcu aliquet.</td>
-													<td>19.99</td>
-												</tr>
-												<tr>
-													<td>Item Three</td>
-													<td> Morbi faucibus arcu accumsan lorem.</td>
-													<td>29.99</td>
-												</tr>
-												<tr>
-													<td>Item Four</td>
-													<td>Vitae integer tempus condimentum.</td>
-													<td>19.99</td>
-												</tr>
-												<tr>
-													<td>Item Five</td>
-													<td>Ante turpis integer aliquet porttitor.</td>
-													<td>29.99</td>
-												</tr>
-											</tbody>
-											<tfoot>
-												<tr>
-													<td colspan="2"></td>
-													<td>100.00</td>
-												</tr>
-											</tfoot>
-										</table>
-									</div>
+    </section>
 
-									<h4>Alternate</h4>
-									<div class="table-wrapper">
-										<table class="alt">
-											<thead>
-												<tr>
-													<th>Name</th>
-													<th>Description</th>
-													<th>Price</th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr>
-													<td>Item One</td>
-													<td>Ante turpis integer aliquet porttitor.</td>
-													<td>29.99</td>
-												</tr>
-												<tr>
-													<td>Item Two</td>
-													<td>Vis ac commodo adipiscing arcu aliquet.</td>
-													<td>19.99</td>
-												</tr>
-												<tr>
-													<td>Item Three</td>
-													<td> Morbi faucibus arcu accumsan lorem.</td>
-													<td>29.99</td>
-												</tr>
-												<tr>
-													<td>Item Four</td>
-													<td>Vitae integer tempus condimentum.</td>
-													<td>19.99</td>
-												</tr>
-												<tr>
-													<td>Item Five</td>
-													<td>Ante turpis integer aliquet porttitor.</td>
-													<td>29.99</td>
-												</tr>
-											</tbody>
-											<tfoot>
-												<tr>
-													<td colspan="2"></td>
-													<td>100.00</td>
-												</tr>
-											</tfoot>
-										</table>
-									</div>
-								</section>
+    <script>
+        function openOverlay(id) { document.getElementById(id).classList.add('active'); }
+        function closeAllOverlays() { 
+            document.querySelectorAll('.full-overlay').forEach(el => el.classList.remove('active'));
+        }
 
-								<section>
-									<h3 class="major">Buttons</h3>
-									<ul class="actions">
-										<li><a href="#" class="button primary">Primary</a></li>
-										<li><a href="#" class="button">Default</a></li>
-									</ul>
-									<ul class="actions">
-										<li><a href="#" class="button">Default</a></li>
-										<li><a href="#" class="button small">Small</a></li>
-									</ul>
-									<ul class="actions">
-										<li><a href="#" class="button primary icon solid fa-download">Icon</a></li>
-										<li><a href="#" class="button icon solid fa-download">Icon</a></li>
-									</ul>
-									<ul class="actions">
-										<li><span class="button primary disabled">Disabled</span></li>
-										<li><span class="button disabled">Disabled</span></li>
-									</ul>
-								</section>
+        const contentData = {
+            hike: {
+                tag: 'Archive 01', title: '此生必徒', sub: 'The Must-Hike List',
+                items: [
+                    { name: '雨崩', desc: '天堂在左 雨崩在右', img: 'https://images.unsplash.com/photo-1544198365-f5d60b6d8190' },
+                    { name: '虎跳峡', desc: '世界十大景点徒步路线', img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b' }
+                ]
+            },
+            peak: {
+                tag: 'Collection 02', title: '巅峰系列', sub: 'Peak Products',
+                items: [
+                    { name: '珠卡瓦格博', desc: '6740M / 梅里/太子雪山 主峰', img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba' },
+                    { name: '冈仁波齐', desc: '6656M / 世界中心', img: 'https://images.unsplash.com/photo-1544923246-77307dd654ca' }
+                ]
+            },
+            other: {
+                tag: 'Other 03', title: '其他设计', sub: 'Explorations',
+                items: [
+                    { name: 'AR Interaction', desc: '增强现实徒步计划', img: 'https://images.unsplash.com/photo-1589412225893-9913ec0b5551' },
+                    { name: 'Identity Design', desc: 'DinoHH 品牌视觉研究', img: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e' }
+                ]
+            }
+        };
 
-								<section>
-									<h3 class="major">Form</h3>
-									<form method="post" action="#">
-										<div class="fields">
-											<div class="field half">
-												<label for="demo-name">Name</label>
-												<input type="text" name="demo-name" id="demo-name" value="" placeholder="Jane Doe" />
-											</div>
-											<div class="field half">
-												<label for="demo-email">Email</label>
-												<input type="email" name="demo-email" id="demo-email" value="" placeholder="jane@untitled.tld" />
-											</div>
-											<div class="field">
-												<label for="demo-category">Category</label>
-												<select name="demo-category" id="demo-category">
-													<option value="">-</option>
-													<option value="1">Manufacturing</option>
-													<option value="1">Shipping</option>
-													<option value="1">Administration</option>
-													<option value="1">Human Resources</option>
-												</select>
-											</div>
-											<div class="field half">
-												<input type="radio" id="demo-priority-low" name="demo-priority" checked>
-												<label for="demo-priority-low">Low</label>
-											</div>
-											<div class="field half">
-												<input type="radio" id="demo-priority-high" name="demo-priority">
-												<label for="demo-priority-high">High</label>
-											</div>
-											<div class="field half">
-												<input type="checkbox" id="demo-copy" name="demo-copy">
-												<label for="demo-copy">Email me a copy</label>
-											</div>
-											<div class="field half">
-												<input type="checkbox" id="demo-human" name="demo-human" checked>
-												<label for="demo-human">Not a robot</label>
-											</div>
-											<div class="field">
-												<label for="demo-message">Message</label>
-												<textarea name="demo-message" id="demo-message" placeholder="Enter your message" rows="6"></textarea>
-											</div>
-										</div>
-										<ul class="actions">
-											<li><input type="submit" value="Send Message" class="primary" /></li>
-											<li><input type="reset" value="Reset" /></li>
-										</ul>
-									</form>
-								</section>
+        function showDetail(key) {
+            const data = contentData[key];
+            if(!data) return;
+            document.getElementById('detail-tag').innerText = data.tag;
+            document.getElementById('detail-title').innerText = data.title;
+            document.getElementById('detail-sub').innerText = data.sub;
+            const container = document.getElementById('detail-content');
+            container.innerHTML = data.items.map(item => `
+                <div class="border border-white/5 p-6 bg-zinc-900/20 group hover:border-neon-green/30 transition-all">
+                    <img src="${item.img}" class="w-full h-72 object-cover mb-6 grayscale group-hover:grayscale-0 transition-all duration-700">
+                    <h3 class="text-2xl font-bold mb-2">${item.name}</h3>
+                    <p class="text-xs opacity-40 uppercase tracking-widest">${item.desc}</p>
+                </div>
+            `).join('');
+            openOverlay('detail-overlay');
+        }
 
-							</article>
-
-					</div>
-
-				<!-- Footer -->
-					<footer id="footer">
-						<p class="copyright">&copy; Untitled. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
-					</footer>
-
-			</div>
-
-		<!-- BG -->
-			<div id="bg"></div>
-
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
-
-	</body>
+        let scene, camera, renderer, points;
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            const geometry = new THREE.PlaneGeometry(30, 30, 80, 80);
+            const material = new THREE.PointsMaterial({ color: 0xc1ff72, size: 0.02, transparent: true, opacity: 0.25 });
+            const vertices = geometry.attributes.position.array;
+            for (let i = 0; i < vertices.length; i += 3) {
+                const x = vertices[i] * 0.3; const y = vertices[i+1] * 0.3;
+                vertices[i+2] = (Math.sin(x) * Math.cos(y) + Math.sin(x * 2.1) * 0.5) * 1.8;
+            }
+            points = new THREE.Points(geometry, material);
+            points.rotation.x = -Math.PI / 3; scene.add(points);
+            camera.position.z = 6; camera.position.y = 3;
+        }
+        function animate() {
+            requestAnimationFrame(animate); points.rotation.z += 0.0008;
+            const time = Date.now() * 0.0005; const pos = points.geometry.attributes.position.array;
+            for (let i = 0; i < pos.length; i += 3) { pos[i+2] += Math.sin(time + pos[i] * 0.5) * 0.0015; }
+            points.geometry.attributes.position.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        init(); animate();
+    </script>
+</body>
 </html>
