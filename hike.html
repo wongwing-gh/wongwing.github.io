@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DinoHH | Archive & Gear v0406.Full-Responsive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&family=Noto+Sans+SC:wght@100;400;700&display=swap');
+        :root { --neon: #c1ff72; }
+        
+        * { cursor: none !important; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* 移动端恢复默认光标并隐藏自定义光标 */
+        @media (max-width: 768px) {
+            * { cursor: auto !important; }
+            #cursor { display: none; }
+        }
+
+        html, body { background: #000; margin: 0; padding: 0; overflow-x: hidden; font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; scroll-behavior: smooth; }
+        
+        header { position: fixed; top: 0; width: 100%; padding: 30px 40px; z-index: 10000; pointer-events: none; }
+        @media (min-width: 768px) { header { padding: 40px 60px; } }
+        .logo-btn { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.2em; color: var(--neon); text-decoration: none; pointer-events: auto; }
+
+        /* 地图容器 */
+        #section-map { position: relative; width: 100vw; height: 100vh; background: #050505; z-index: 1; overflow: hidden; }
+        #map { width: 100%; height: 100%; }
+
+        /* 面板响应式定位 */
+        .glass-panel {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(15, 15, 15, 0.9) 0%, rgba(5, 5, 5, 0.8) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 24px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* PC端：右侧排列 */
+        @media (min-width: 768px) {
+            #persistent-progress { top: 60px; right: 60px; width: 280px; z-index: 100; }
+            #filter-floating { top: 280px; right: 60px; width: 280px; z-index: 99; }
+        }
+
+        /* 手机端：底部堆叠 */
+        @media (max-width: 767px) {
+            #persistent-progress { top: auto; bottom: 170px; left: 15px; right: 15px; width: auto !important; padding: 15px; }
+            #filter-floating { top: auto; bottom: 15px; left: 15px; right: 15px; width: auto !important; padding: 15px; }
+            #persistent-progress .text-7xl { font-size: 3.5rem; }
+            #persistent-progress .text-4xl { font-size: 1.5rem; }
+        }
+
+        /* 弹窗与交互 */
+        .mapboxgl-popup-content { background: rgba(15, 15, 15, 0.95) !important; backdrop-filter: blur(8px); border: 1px solid var(--neon); color: white; padding: 12px !important; border-radius: 0 !important; }
+        .range-slider { position: relative; width: 100%; height: 20px; margin-top: 10px; }
+        .range-slider input[type="range"] { position: absolute; left: 0; width: 100%; pointer-events: none; -webkit-appearance: none; background: none; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 8px; height: 16px; background: var(--neon); cursor: pointer; pointer-events: auto; }
+        .slider-track { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; height: 1px; background: rgba(255,255,255,0.1); z-index: 1; }
+
+        /* 地图标记样式 */
+        .route-marker { pointer-events: auto !important; }
+        .route-marker .dot { width: 4px; height: 4px; background: rgba(255,255,255,0.3); border-radius: 50%; transition: 0.3s; }
+        .route-name { margin-top: 6px; font-size: 8px; color: rgba(255,255,255,0.2); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+        .route-marker.highlight .dot { width: 7px; height: 7px; background: var(--neon); box-shadow: 0 0 12px var(--neon); }
+        .route-marker.highlight .route-name { color: var(--neon); opacity: 1; font-weight: 700; }
+        .route-marker.dimmed { opacity: 0.05; filter: blur(2px); pointer-events: none; }
+
+        /* 产品页响应式 */
+        #section-product { position: relative; min-height: 100vh; background: #0a0a0a; padding: 80px 20px; z-index: 10; border-top: 1px solid rgba(193, 255, 114, 0.1); }
+        @media (min-width: 768px) { #section-product { padding: 120px 60px; } }
+        
+        .product-img {
+            opacity: 0.2;
+            filter: grayscale(100%);
+            transition: opacity 0.05s linear, filter 0.05s linear;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        @media (max-width: 768px) {
+            .product-img { opacity: 0.7; filter: grayscale(30%); } /* 手机端默认半亮，方便滑动观看 */
+        }
+        .product-img:hover { opacity: 1 !important; filter: grayscale(0%) !important; transition: none !important; }
+        .img-container { background: #000; overflow: hidden; position: relative; border: none; }
+
+        #cursor { position: fixed; top: 0; left: 0; width: 6px; height: 6px; background: var(--neon); border-radius: 50%; pointer-events: none; z-index: 20000; box-shadow: 0 0 10px var(--neon); transform: translate(-50%, -50%); }
+        #scroll-down { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 100; color: var(--neon); animation: bounce 2s infinite; pointer-events: auto; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {bottom: 40px;} 40% {bottom: 55px;} }
+    </style>
+</head>
+<body>
+
+    <div id="cursor"></div>
+    <header><a href="0405.html" class="logo-btn">DinoHH</a></header>
+
+    <section id="section-map">
+        <div id="map"></div>
+        
+        <div id="persistent-progress" class="glass-panel">
+            <div class="flex flex-col mb-4">
+                <span class="text-4xl font-black text-[#c1ff72] tracking-tighter mb-1">此生必徒</span>
+                <div class="w-full h-[1px] bg-[#c1ff72]/30 mb-4"></div>
+                <div class="flex justify-between items-end">
+                    <span class="text-[9px] text-white/40 font-bold tracking-widest uppercase">Archive Progress</span>
+                    <div class="text-right flex items-baseline leading-none">
+                        <span class="text-7xl font-extralight text-[#c1ff72] tracking-tighter" id="product-count">07</span>
+                        <span class="text-[10px] text-white/20 ml-1">/ 100</span>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full h-[1px] bg-white/10 relative overflow-hidden">
+                <div id="progress-bar" class="absolute top-0 left-0 h-full bg-[#c1ff72] transition-all duration-1000" style="width: 7%;"></div>
+            </div>
+        </div>
+
+        <div id="filter-floating" class="glass-panel">
+            <div class="flex justify-between items-center mb-6 md:mb-10 pb-4 border-b border-white/10">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-[#c1ff72] font-bold tracking-widest uppercase">Explore Mode</span>
+                    <span class="text-[8px] text-white/40">探索模式</span>
+                </div>
+                <input type="checkbox" id="master-switch" class="accent-[#c1ff72] scale-125 cursor-pointer">
+            </div>
+            <div class="space-y-6 md:space-y-8">
+                <div class="space-y-3">
+                    <div class="flex justify-between text-[8px] tracking-widest uppercase">
+                        <span class="text-white/40">Length / 长度 (KM)</span>
+                        <span id="len-val" class="text-[#c1ff72]">500</span>
+                    </div>
+                    <input type="range" id="f-len" min="0" max="500" value="500" class="w-full" style="background:rgba(255,255,255,0.1);height:1px;-webkit-appearance:none;outline:none;pointer-events:auto;">
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-[8px] tracking-widest uppercase">
+                        <span class="text-white/40">Season / 月份区间</span>
+                        <span id="month-val" class="text-[#c1ff72]">1 - 12月</span>
+                    </div>
+                    <div class="range-slider">
+                        <div class="slider-track"></div>
+                        <input type="range" id="f-month-start" min="1" max="12" value="1">
+                        <input type="range" id="f-month-end" min="1" max="12" value="12">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="scroll-down" onclick="window.scrollTo(0, window.innerHeight)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 13l5 5 5-5M7 6l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </section>
+
+    <section id="section-product">
+        <div class="max-w-7xl mx-auto">
+            <div id="product-grid" class="flex flex-col w-full"></div>
+        </div>
+    </section>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZGpodGQiLCJhIjoiY21rZml1a2ZsMDFzbjNkc2c2dnI1ZGdjaiJ9.bu5bbepK3BLbM8CLeX7IZA';
+        const map = new mapboxgl.Map({ 
+            container: 'map', 
+            style: 'mapbox://styles/mapbox/dark-v11', 
+            center: [102.0, 32.0], 
+            zoom: window.innerWidth < 768 ? 3.2 : 4.5 
+        });
+
+        const routes = [
+            { id: 6, name: "阿布吉措", pos: [99.825, 27.755], len: 18, month: [5,10], info: "香格里拉纯净秘境，高山翡翠湖泊。" },
+            { id: 7, name: "卡瓦格博", pos: [98.785, 28.425], len: 35, month: [5,10], info: "梅里雪山主峰转山，信仰之巅。" },
+            { id: 2, name: "虎跳峡", pos: [100.121, 27.234], len: 26, month: [1,12], info: "全球十大经典徒步路线。" },
+            { id: 1, name: "雨崩", pos: [98.788, 28.391], len: 63, month: [5,10], info: "梅里雪山下的藏式世外桃源。" },
+            { id: 4, name: "南极洛", pos: [99.123, 27.652], len: 14, month: [6,10], info: "上帝遗落的调色盘。" },
+            { id: 34, name: "哈巴雪山", pos: [100.135, 27.318], len: 15, month: [11,12], info: "入门级5000米雪山。" },
+            { id: 15, name: "贡嘎环线", pos: [101.812, 29.591], len: 80, month: [6,10], info: "蜀山之王，顶级雪山朝圣。" },
+            { id: 8, name: "格聂V线", pos: [99.852, 29.835], len: 90, month: [6,10], info: "康南最后的秘境。" },
+            { id: 9, name: "雅拉雪山", pos: [101.765, 30.388], len: 40, month: [6,10], info: "东方白牦牛山。" },
+            { id: 10, name: "四姑娘山", pos: [102.902, 31.125], len: 20, month: [1,12], info: "户外爱好者的天堂。" },
+            { id: 11, name: "亚丁转山", pos: [100.345, 28.462], len: 60, month: [9,10], info: "蓝色星球最后一片净土。" },
+            { id: 12, name: "长穿毕", pos: [102.825, 31.108], len: 35, month: [10,11], info: "穿越四姑娘山核心。" },
+            { id: 13, name: "那玛峰", pos: [101.851, 29.623], len: 18, month: [1,12], info: "贡嘎主峰最佳观景台。" },
+            { id: 14, name: "党岭", pos: [101.052, 30.855], len: 35, month: [10,11], info: "著名的红叶摄影地。" },
+            { id: 5, name: "冈仁波齐", pos: [81.312, 31.065], len: 52, month: [5,10], info: "世界中心，神山之首。" },
+            { id: 16, name: "嘎玛沟", pos: [87.355, 27.952], len: 85, month: [5,10], info: "全球最美谷地。" },
+            { id: 17, name: "库拉岗日", pos: [90.625, 28.238], len: 45, month: [5,10], info: "山南秘境，雪山群连绵。" },
+            { id: 18, name: "希夏邦马", pos: [85.782, 28.351], len: 65, month: [5,10], info: "唯全境在中国的8000米雪山。" },
+            { id: 19, name: "南迦巴瓦", pos: [95.051, 29.555], len: 35, month: [1,12], info: "最美雪山，直刺蓝天。" },
+            { id: 20, name: "萨普冰川", pos: [93.922, 31.155], len: 20, month: [5,9], info: "完美等边三角形雪山。" },
+            { id: 21, name: "乌孙古道", pos: [82.552, 42.155], len: 120, month: [6,9], info: "天堂湖的深蓝梦想。" },
+            { id: 22, name: "夏特古道", pos: [81.152, 42.355], len: 120, month: [5,9], info: "玄奘西行之路。" },
+            { id: 23, name: "狼塔", pos: [86.255, 43.652], len: 200, month: [8,9], info: "国内最艰苦的骨灰级路线。" },
+            { id: 24, name: "喀纳斯", pos: [87.055, 48.552], len: 100, month: [9,10], info: "中国秋色天花板。" },
+            { id: 25, name: "博格达", pos: [88.352, 43.855], len: 80, month: [7,8], info: "东天山最高峰。" },
+            { id: 26, name: "孟克特", pos: [84.355, 43.952], len: 70, month: [6,9], info: "独库公路旁秘境。" },
+            { id: 27, name: "五台山大朝台", pos: [113.615, 39.022], len: 70, month: [6,9], info: "华北最高处的云端漫步。" },
+            { id: 28, name: "太白山", pos: [107.755, 33.952], len: 60, month: [6,9], info: "秦岭主峰，南北分界线。" },
+            { id: 29, name: "腾格里", pos: [105.155, 38.252], len: 50, month: [4,10], info: "翻越沙漠沙丘。" },
+            { id: 30, name: "小五台", pos: [115.055, 39.952], len: 25, month: [6,7], info: "华北屋脊，金莲花海。" },
+            { id: 31, name: "年保玉则", pos: [101.155, 33.352], len: 45, month: [7,8], info: "众神后花园。" },
+            { id: 32, name: "扎尕那", pos: [103.225, 34.202], len: 40, month: [6,10], info: "洛克之路核心石城。" },
+            { id: 33, name: "武功山", pos: [114.162, 27.465], len: 35, month: [5,10], info: "万亩高山草甸。" },
+            { id: 3, name: "麦理浩径", pos: [114.155, 22.355], len: 100, month: [11,3], info: "香港最美行山径。" },
+            { id: 35, name: "神农架", pos: [110.322, 31.485], len: 60, month: [5,10], info: "探秘原始冷杉林。" },
+            { id: 36, name: "黄山", pos: [118.182, 30.125], len: 20, month: [1,12], info: "奇松怪石，云海峰林。" },
+            { id: 37, name: "三清山", pos: [118.085, 28.922], len: 15, month: [1,12], info: "花岗岩峰林之巅。" },
+            { id: 38, name: "梵净山", pos: [108.755, 27.922], len: 18, month: [4,10], info: "黔东名山，孤峰拔地。" },
+            { id: 39, name: "括苍山", pos: [120.922, 28.825], len: 25, month: [1,12], info: "风车群与日出盛景。" },
+            { id: 40, name: "公盂", pos: [120.722, 28.625], len: 18, month: [1,12], info: "华东香格里拉。" },
+            { id: 41, name: "华山", pos: [110.085, 34.482], len: 12, month: [1,12], info: "奇险天下第一山。" },
+            { id: 42, name: "漓江", pos: [110.455, 24.952], len: 15, month: [1,12], info: "山水画实景漫步。" },
+            { id: 43, name: "龙脊梯田", pos: [110.155, 25.752], len: 15, month: [5,10], info: "金色梯田与瑶寨。" },
+            { id: 44, name: "泰山", pos: [117.105, 36.252], len: 10, month: [1,12], info: "五岳之首。" },
+            { id: 45, name: "莫斯卡", pos: [101.755, 30.952], len: 20, month: [5,10], info: "探访藏式村落与旱獭。" },
+            { id: 46, name: "九顶山", pos: [103.755, 31.552], len: 18, month: [6,7], info: "繁花与云海。" },
+            { id: 47, name: "高黎贡山", pos: [98.755, 24.952], len: 30, month: [11,3], info: "二战抗战古道。" },
+            { id: 48, name: "哈拉湖", pos: [97.555, 38.352], len: 100, month: [7,8], info: "祁连山腹地黑海。" },
+            { id: 49, name: "贺兰山", pos: [105.855, 38.852], len: 35, month: [5,10], info: "银川背后的脊梁。" },
+            { id: 50, name: "武夷山", pos: [117.955, 27.652], len: 12, month: [1,12], info: "丹霞地貌精华。" },
+            { id: 51, name: "南岭", pos: [113.025, 24.922], len: 25, month: [11,1], info: "广东最高峰冰挂。" },
+            { id: 52, name: "阿里北线", pos: [83.505, 32.505], len: 500, month: [5,10], info: "极致荒野与深蓝。" }
+        ];
+
+        const highlights = ["雨崩", "虎跳峡", "麦理浩径" , "南极洛", "冈仁波齐", "阿布吉措", "卡瓦格博"];
+        const markers = [];
+        const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 15 });
+
+        // 产品列表渲染（包含响应式Grid）
+        // --- 修改后的产品渲染逻辑 ---
+function renderProducts() {
+    const grid = document.getElementById('product-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    // 定义没有图片的路线 ID 列表
+    const noImageIds = [6, 7]; // 阿布吉措 (6), 卡瓦格博 (7)
+
+    highlights.forEach(name => {
+        const r = routes.find(i => i.name === name);
+        if(r) {
+            const div = document.createElement('div');
+            div.id = `product-card-${r.id}`;
+            // 响应式 Grid 布局保持不变
+            div.className = 'product-card group grid grid-cols-1 md:grid-cols-2 items-center border-b border-white/5 pb-16 md:pb-32 mb-16 md:mb-32 w-full';
+            
+            // 定义图片/占位块区域的 HTML
+            let mediaHtml = '';
+            
+            if (noImageIds.includes(r.id)) {
+                // 如果没有图片：渲染极简占位块
+                mediaHtml = `
+                    <div class="img-container aspect-[4/3] bg-black/40 w-full max-w-[500px] mx-auto md:mx-0 flex items-center justify-center border border-white/5 group-hover:border-[#c1ff72]/20 transition-colors duration-300">
+                        <div class="text-center opacity-20 group-hover:opacity-100 transition-opacity duration-300">
+                            <span class="text-[10px] text-[#c1ff72] font-black tracking-[0.5em] uppercase block mb-2">Image</span>
+                            <span class="text-2xl font-light text-white tracking-widest uppercase opacity-80">Coming Soon</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // 如果有图片：渲染原有图片逻辑
+                mediaHtml = `
+                    <div class="img-container aspect-[4/3] bg-black w-full max-w-[500px] mx-auto md:mx-0">
+                        <img src="images/product_${r.id}.jpg" 
+                             class="product-img w-full h-full object-cover" 
+                             alt="${r.name}" 
+                             onerror="this.parentNode.style.background='#111'; this.style.display='none';">
+                    </div>
+                `;
+            }
+
+            // 整合最终 HTML
+            div.innerHTML = `
+                <div class="flex flex-col items-center md:items-end px-6 md:pr-12 text-center md:text-right mb-10 md:mb-0">
+                    <span class="text-[9px] text-[#c1ff72] mb-4 block uppercase font-bold tracking-[0.4em]">Archive No.0${r.id}</span>
+                    <h3 class="text-5xl md:text-7xl font-bold text-white mb-6 md:mb-8 tracking-tighter leading-none">${r.name}</h3>
+                    <p class="text-sm text-white/30 max-w-[320px] leading-relaxed mb-8 md:mb-10">${r.info}</p>
+                    <div class="flex items-center gap-6">
+                        <div class="text-[10px] text-white/20 uppercase tracking-widest border-b border-white/10 pb-1">Dist. ${r.len} KM</div>
+                        <div class="text-[10px] text-white/20 uppercase tracking-widest border-b border-white/10 pb-1">Season. ${r.month[0]}-${r.month[1]}M</div>
+                    </div>
+                </div>
+                <div class="relative w-full px-4 md:pl-12">
+                    ${mediaHtml}
+                </div>
+            `;
+            grid.appendChild(div);
+        }
+    });
+}
+        const mStart = document.getElementById('f-month-start');
+        const mEnd = document.getElementById('f-month-end');
+        const monthVal = document.getElementById('month-val');
+
+        function updateMonths() {
+            let v1 = parseInt(mStart.value), v2 = parseInt(mEnd.value);
+            monthVal.innerText = `${Math.min(v1, v2)} - ${Math.max(v1, v2)}月`;
+            updateView();
+        }
+
+        function updateView() {
+            const isExp = document.getElementById('master-switch').checked;
+            const lenLimit = parseInt(document.getElementById('f-len').value);
+            const rMin = Math.min(parseInt(mStart.value), parseInt(mEnd.value)), rMax = Math.max(parseInt(mStart.value), parseInt(mEnd.value));
+            document.getElementById('len-val').innerText = lenLimit;
+
+            markers.forEach(m => {
+                m.el.classList.remove('highlight', 'dimmed');
+                const lenOk = m.len <= lenLimit;
+                const mOk = (m.month[0] <= rMax && m.month[1] >= rMin);
+                if (!isExp) {
+                    if (highlights.includes(m.name)) m.el.classList.add('highlight'); else m.el.classList.add('dimmed');
+                } else {
+                    if (lenOk && mOk) m.el.classList.add('highlight'); else m.el.classList.add('dimmed');
+                }
+            });
+            const current = highlights.length;
+            document.getElementById('product-count').innerText = current < 10 ? `0${current}` : current;
+            document.getElementById('progress-bar').style.width = `${(current / 100) * 100}%`;
+        }
+
+        map.on('load', () => {
+            routes.forEach(r => {
+                const el = document.createElement('div');
+                el.className = 'route-marker';
+                el.innerHTML = `<div class="dot"></div><div class="route-name">${r.name}</div>`;
+                
+                // 点击地图标记跳转到产品页对应卡片
+                el.addEventListener('click', () => {
+                    const targetCard = document.getElementById(`product-card-${r.id}`);
+                    if (targetCard) {
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+
+                el.addEventListener('mouseenter', () => {
+                    if(el.classList.contains('dimmed')) return;
+                    popup.setLngLat(r.pos).setHTML(`<div><strong style="color:#c1ff72;font-size:14px">${r.name}</strong><div style="font-size:10px;margin-top:5px;opacity:0.8">长度: ${r.len}KM | 月份: ${r.month[0]}-${r.month[1]}月</div></div>`).addTo(map);
+                });
+                el.addEventListener('mouseleave', () => popup.remove());
+                
+                new mapboxgl.Marker(el).setLngLat(r.pos).addTo(map);
+                markers.push({ ...r, el });
+            });
+            renderProducts(); updateView();
+        });
+
+        mStart.addEventListener('input', updateMonths);
+        mEnd.addEventListener('input', updateMonths);
+        document.getElementById('master-switch').addEventListener('input', updateView);
+        document.getElementById('f-len').addEventListener('input', updateView);
+        
+        // 自定义光标跟随
+        window.addEventListener('mousemove', e => { 
+            const c = document.getElementById('cursor');
+            if(c) {
+                c.style.left = e.clientX + 'px'; 
+                c.style.top = e.clientY + 'px'; 
+            }
+        });
+        
+        // 窗口尺寸变更时刷新地图布局
+        window.addEventListener('resize', () => {
+            map.resize();
+        });
+    </script>
+</body>
+</html>
