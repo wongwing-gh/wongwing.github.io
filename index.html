@@ -4,260 +4,332 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DinoHH | Studio Index</title>
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_4414603_f85p8o90v6r.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;600&family=Noto+Sans+SC:wght@100;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;600;700&family=Noto+Sans+SC:wght@100;400;700&display=swap');
         
         :root { --neon-green: #c1ff72; --deep-black: #0a0a0a; }
+
+        * { cursor: none !important; } /* 强制隐藏原生鼠标 */
 
         body {
             background-color: var(--deep-black); color: #fff;
             font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
-            margin: 0; overflow-x: hidden; cursor: crosshair;
+            margin: 0; overflow-x: hidden;
         }
 
-        /* 顶部导航：Logo & 社媒 */
+        /* --- 自发光鼠标跟随器 --- */
+        #custom-cursor {
+            position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999;
+            mix-blend-mode: screen;
+        }
+        .cursor-dot {
+            width: 6px; height: 6px; background-color: var(--neon-green);
+            border-radius: 50%; position: absolute; transform: translate(-50%, -50%);
+        }
+        .cursor-glow {
+            width: 40px; height: 40px; background-color: rgba(193, 255, 114, 0.1);
+            border: 1px solid rgba(193, 255, 114, 0.3); border-radius: 50%;
+            position: absolute; transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px var(--neon-green), inset 0 0 5px var(--neon-green);
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
+        }
+        .cursor-active .cursor-glow {
+            width: 75px; height: 75px; background-color: rgba(193, 255, 114, 0.2);
+            border-color: var(--neon-green);
+        }
+
+        /* --- 顶部导航 --- */
         header {
             position: fixed; top: 0; width: 100%; padding: 40px 60px;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 500; 
-            background: linear-gradient(to bottom, rgba(10,10,10,1) 0%, rgba(10,10,10,0) 100%);
+            display: flex; justify-content: space-between; align-items: center; z-index: 500;
+        }
+        .logo-btn { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.2em; color: var(--neon-green); transition: opacity 0.3s; }
+        .logo-btn:hover { opacity: 0.7; }
+        
+        .social-links { display: flex; gap: 24px; align-items: center; }
+        .social-links a { width: 22px; height: 22px; transition: all 0.3s; color: var(--neon-green); opacity: 0.5; }
+        .social-links a:hover { opacity: 1; transform: scale(1.1); filter: drop-shadow(0 0 5px var(--neon-green)); }
+        .social-links svg { fill: currentColor; }
+
+      /* --- 品牌核心视觉：精密紧凑对齐 --- */
+        .brand-block {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 10; text-align: center; 
+            width: fit-content; 
+            min-width: 350px; /* 稍微增加最小宽度，确保对齐空间 */
+            display: flex; flex-direction: column;
+            /* 关键修改：通过 gap 统一控制三行的间距，0.3rem 非常紧凑 */
+            gap: 0.35rem; 
+            pointer-events: none;
         }
 
-        .logo-btn { 
-            font-size: 1.6rem; font-weight: 600; letter-spacing: 0.25em; 
-            color: var(--neon-green); cursor: pointer; 
-            transition: all 0.3s ease;
-        }
-        .logo-btn:hover { opacity: 0.6; filter: drop-shadow(0 0 8px var(--neon-green)); }
-
-        .social-icons a {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(193, 255, 114, 0.2);
-            transition: all 0.3s ease; margin-left: 15px;
-        }
-        .social-icons a:hover {
-            border-color: var(--neon-green);
-            background: rgba(193, 255, 114, 0.1);
-            filter: drop-shadow(0 0 5px var(--neon-green));
-        }
-        .social-icons svg { width: 16px; height: 16px; fill: var(--neon-green); }
-
-        /* 遮罩层核心控制 */
-        .full-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--deep-black); z-index: 1000;
-            transform: translateY(-100%);
-            visibility: hidden;
-            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1), visibility 0s 0.8s;
-            display: flex; align-items: start; justify-content: center; overflow-y: auto;
-            padding-top: 150px;
-        }
-        .full-overlay.active {
-            transform: translateY(0);
-            visibility: visible;
-            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1), visibility 0s 0s;
+        .brand-title {
+            font-size: clamp(3.5rem, 9vw, 7.5rem); 
+            font-weight: 700; 
+            /* 关键修改：将行高压到最低，消除字母上下的多余空间 */
+            line-height: 0.75; 
+            color: #ffffff; 
+            text-transform: none; 
+            text-align: justify;
+            text-align-last: justify; 
+            width: 100%;
+            margin: 0; /* 清除所有外边距 */
+            display: block;
         }
 
-        /* 首页列表项交互 */
-        .nav-item {
-            position: relative; z-index: 10; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1); cursor: pointer;
+        .brand-tags {
+            font-size: clamp(0.5rem, 0.9vw, 0.85rem); 
+            font-weight: 400;
+            color: #a3e635; 
+            opacity: 0.8;
+            text-align: justify;
+            text-align-last: justify;
+            width: 100%;
+            /* 关键修改：缩减上下内边距 */
+            padding: 0.3rem 0; 
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            margin: 0;
+            line-height: 1;
         }
-        .nav-item .description {
-            max-height: 0; opacity: 0; overflow: hidden;
-            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1); transform: translateY(10px);
+
+        .slogan {
+            font-size: clamp(0.5rem, 0.8vw, 0.7rem); 
+            font-weight: 300;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.4); 
+            white-space: nowrap; 
+            display: block;
+            text-align: justify;
+            text-align-last: justify;
+            margin: 0;
+            /* 稍微拉开一点字母间距，增加底层文字的稳固感 */
+            letter-spacing: 0.02em; 
+        }
+        
+        /* --- 全屏遮罩与中英简介 --- */
+        .full-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--deep-black); z-index: 1000; transform: translateY(-100%); 
+            visibility: hidden; transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1); 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .full-overlay.active { transform: translateY(0); visibility: visible; }
+        .neon-text { color: var(--neon-green); }
+
+        /* --- 列表项：中英等权布局 --- */
+        .nav-item { 
+            position: relative; z-index: 10; border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            padding: 75px 0; transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
         }
         .nav-item:hover { border-bottom: 1px solid var(--neon-green); padding-left: 20px; }
-        .nav-item:hover .description { max-height: 200px; opacity: 1; transform: translateY(0); padding-top: 25px; }
-
-        .nav-img {
+        .description-box { max-height: 0; opacity: 0; overflow: hidden; transform: translateY(15px); transition: all 0.6s; }
+        .nav-item:hover .description-box { max-height: 150px; opacity: 1; transform: translateY(0); margin-top: 25px; }
+        
+        .nav-img-preview { 
             position: fixed; top: 50%; right: 10%; transform: translate(0, -45%) scale(0.9);
-            width: 35vw; height: 50vh; object-fit: cover; opacity: 0;
-            transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1); pointer-events: none;
-            z-index: 5; filter: saturate(0) brightness(0.6); border-left: 1px solid var(--neon-green);
+            width: 28vw; height: 42vh; object-fit: cover; opacity: 0;
+            transition: all 0.8s; pointer-events: none; z-index: 5;
+            filter: grayscale(1) brightness(0.4); border-left: 2px solid var(--neon-green);
         }
-        .nav-item:hover .nav-img { opacity: 0.6; transform: translate(0, -50%) scale(1); }
+        .nav-item:hover .nav-img-preview { opacity: 0.6; transform: translate(0, -50%) scale(1); }
 
-        .neon-text { color: var(--neon-green); }
-        .eng-sub { font-size: 11px; letter-spacing: 0.4em; color: rgba(255, 255, 255, 0.3); text-transform: uppercase; }
         #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 0; pointer-events: none; }
     </style>
 </head>
 <body>
+<body>
 
-    <div id="about-overlay" class="full-overlay">
-        <div class="max-w-4xl text-center space-y-12 p-10">
-            <h2 class="text-6xl font-bold neon-text uppercase">DinoHH</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-left border-t border-white/10 pt-12">
-                <div class="space-y-4">
-                    <h3 class="neon-text text-xs tracking-widest uppercase">About / 关于</h3>
-                    <p class="text-sm leading-relaxed opacity-60">由独立设计师创立于 2024 年，致力于探索自然景观与设计的交界。通过 3D 建模、AR 技术与文创周边，重新定义人类与山脉的连接方式。</p>
-                </div>
-                <div class="space-y-4">
-                    <h3 class="neon-text text-xs tracking-widest uppercase">Target / 目标</h3>
-                    <p class="text-sm leading-relaxed opacity-60">2026年，将持续更新 此生必徒 系列产品，并探索 AR 与户外交互的无限可能。</p>
-                </div>
-            </div>
-            <button onclick="closeAllOverlays()" class="px-8 py-3 border border-neon-green neon-text text-xs uppercase tracking-widest hover:bg-[#c1ff72] hover:text-black transition-all">Close / 关闭</button>
-        </div>
+    <div id="custom-cursor">
+        <div class="cursor-dot"></div>
+        <div class="cursor-glow"></div>
     </div>
 
-    <div id="detail-overlay" class="full-overlay">
-        <div class="w-full max-w-6xl p-10">
-            <nav class="mb-12">
-                <button onclick="closeAllOverlays()" class="border border-neon-green px-6 py-2 text-xs neon-text tracking-widest uppercase hover:bg-[#c1ff72] hover:text-black transition-all">← Back / 返回首页</button>
-            </nav>
-            <header class="mb-16">
-                <span id="detail-tag" class="neon-text text-xs tracking-[0.5em] uppercase">Category</span>
-                <h2 id="detail-title" class="text-6xl font-bold mt-4 mb-2 uppercase">Title</h2>
-                <p id="detail-sub" class="opacity-40 text-sm tracking-widest uppercase">Subtext</p>
-            </header>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 pb-40" id="detail-content"></div>
-        </div>
-    </div>
+<header style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: fixed; top: 0; padding: 40px 60px; z-index: 500; box-sizing: border-box; pointer-events: none;">
+        <div class="logo-btn" onclick="toggleOverlay('about-overlay')" style="cursor: pointer; pointer-events: auto; color: #c1ff72; font-weight: 700; letter-spacing: 0.1em; font-size: 1.2rem;">DinoHH</div>
 
-    <header>
-        <div class="logo-btn" onclick="openOverlay('about-overlay')">DinoHH</div>
-        
-        <div class="social-icons flex items-center">
-            <a href="https://s.taobao.com/search?q=DinoHH" target="_blank" title="淘宝 / Taobao">
-                <svg viewBox="0 0 1024 1024"><path d="M512 0a512 512 0 1 0 512 512A512 512 0 0 0 512 0zm213.3 640a128 128 0 1 1-128-128 128 128 0 0 1 128 128zm-256-128a128 128 0 1 1-128-128 128 128 0 0 1 128 128z"/></svg>
+        <div class="social-links" style="display: flex; gap: 28px; align-items: center; pointer-events: auto;">
+            
+            <a href="https://s.taobao.com/search?q=DinoHH" target="_blank" title="淘宝" style="color: #c1ff72; opacity: 0.6; transition: 0.3s; display: flex;">
+                <svg width="22" height="22" viewBox="0 0 1024 1024" fill="currentColor">
+                    <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm216 512H320v-64h408v64zm-40 128H320v-64h368v64z"></path>
+                </svg>
             </a>
-            <a href="https://www.xiaohongshu.com/search_result?keyword=DinoHH" target="_blank" title="小红书 / Red">
-                <svg viewBox="0 0 1024 1024"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 640c-106 0-192-86-192-192s86-192 192-192 192 86 192 192-86 192-192 192z"/></svg>
+
+            <a href="https://www.xiaohongshu.com" target="_blank" title="小红书" style="color: #c1ff72; opacity: 0.6; transition: 0.3s; display: flex;">
+                <svg width="22" height="22" viewBox="0 0 1024 1024" fill="currentColor">
+                    <path d="M832 64H192C121.3 64 64 121.3 64 192v640c0 70.7 57.3 128 128 128h640c70.7 0 128-57.3 128-128V192c0-70.7-57.3-128-128-128zM512 736c-123.7 0-224-100.3-224-224s100.3-224 224-224 224 100.3 224 224-100.3 224-224 224z"></path>
+                </svg>
             </a>
-            <a href="https://www.douyin.com/search/DinoHH" target="_blank" title="抖音 / TikTok">
-                <svg viewBox="0 0 1024 1024"><path d="M512 1024C229.2 1024 0 794.8 0 512S229.2 0 512 0s512 229.2 512 512-229.2 512-512 512zm256-512h-128v192c0 35.3-28.7 64-64 64s-64-28.7-64-64 28.7-64 64-64h32v-128h-32c-106 0-192 86-192 192s86 192 192 192 192-86 192-192v-256z"/></svg>
+
+            <a href="https://www.douyin.com" target="_blank" title="抖音" style="color: #c1ff72; opacity: 0.6; transition: 0.3s; display: flex;">
+                <svg width="20" height="20" viewBox="0 0 1024 1024" fill="currentColor">
+                    <path d="M805.1 364.5c-56.1-3.9-106.3-25.4-147-60.1V630c0 144.7-117.3 262-262 262S134 774.7 134 630s117.3-262 262-262c30.2 0 58.7 5.1 85.1 14.5v134.1c-25-15.6-54.5-24.6-86-24.6-87.3 0-158.1 70.8-158.1 158.1s70.8 158.1 158.1 158.1 158.1-70.8 158.1-158.1V128h134.1c6.5 73.1 44.8 136.2 101.9 176.4v60.1z"></path>
+                </svg>
             </a>
         </div>
     </header>
 
+    <div id="about-overlay" class="full-overlay">
+        <div class="max-w-4xl text-center space-y-12 p-10">
+            <div class="space-y-3">
+                <h2 class="text-6xl font-bold neon-text  tracking-tighter">DinoHH</h2>
+                <div class="flex justify-center items-center gap-4 opacity-30">
+                    <div class="h-[1px] w-8 bg-[#c1ff72]"></div>
+                    <span class="text-[10px] uppercase tracking-[0.4em]">Creative Studio</span>
+                    <div class="h-[1px] w-8 bg-[#c1ff72]"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-16 text-left border-t border-white/10 pt-12">
+                <div class="space-y-6">
+                    <h3 class="neon-text text-xs tracking-widest uppercase">About / 关于</h3>
+                    <div class="space-y-4">
+                        <p class="text-base leading-relaxed opacity-90 font-light">DinoHH 专注于高海拔户外美学。我们通过设计连接自然与都市生活，将雪山的原始力量转化为数字化艺术与实体文创。</p>
+                        <p class="text-[11px] leading-relaxed opacity-30 font-extralight uppercase tracking-wide">DinoHH specializes in high-altitude outdoor aesthetics. We bridge nature and urban life through design, transforming raw mountain energy into digital art.</p>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <h3 class="neon-text text-xs tracking-widest uppercase">Target / 目标</h3>
+                    <div class="space-y-4">
+                        <p class="text-base leading-relaxed opacity-90 font-light">2026年，我们将完成 14 座八千米雪山复刻，并前往新西兰探索 AR 与户外交互的无限可能。</p>
+                        <p class="text-[11px] leading-relaxed opacity-30 font-extralight uppercase tracking-wide">In 2026, we will complete the digital reconstruction of 14 peaks and explore AR interaction possibilities in New Zealand.</p>
+                    </div>
+                </div>
+            </div>
+            <button onclick="toggleOverlay('about-overlay')" class="px-10 py-3 border border-neon-green neon-text text-xs uppercase tracking-widest hover:bg-[#c1ff72] hover:text-black transition-all">Close / 关闭</button>
+        </div>
+    </div>
+
     <div id="canvas-container"></div>
 
-    <section class="relative h-screen w-full flex flex-col items-center justify-center z-10 text-center">
-        <h1 class="text-7xl md:text-9xl font-bold tracking-[0.6em] mb-8">DinoHH</h1>
-        <p class="eng-sub opacity-30">Outdoor Creative Studio</p>
-    </section>
+    <div class="brand-block">
+        <h1 class="brand-title">DinoHH</h1>
+        <div class="brand-tags">由设计师Huanghuang发起的个人品牌 设计基于真实徒步与观察创作 </div>
+        <p class="slogan">the mountains are calling and i must go!</p>
+    </div>
 
-    <section class="relative z-10 px-10 md:px-32 pb-40 max-w-7xl">
-        
-        <div class="nav-item group py-20" onclick="showDetail('hike')">
-            <div class="flex flex-col">
-                <span class="text-[10px] neon-text mb-3 tracking-[0.5em]">01 / ARCHIVE</span>
-                <h2 class="text-5xl md:text-8xl font-bold uppercase">此生必徒</h2>
-                <div class="description max-w-xl">
-                    <p class="text-sm opacity-60 leading-relaxed mb-3">全球顶尖徒步路线档案。记录每一段通往未知的步伐。</p>
-                    <p class="eng-sub !tracking-widest">A curated archive of the world's iconic hiking routes.</p>
-                </div>
+    <section class="relative z-10 px-10 md:px-32 pb-60 max-w-7xl mt-[115vh]">
+<a href="hike.html" class="nav-item group block" style="cursor: pointer; pointer-events: auto; text-decoration: none;">
+    <div class="flex flex-col md:flex-row md:items-baseline gap-6">
+        <h2 class="text-5xl md:text-7xl font-bold uppercase">此生必徒</h2>
+        <span class="text-xl md:text-2xl neon-text font-light tracking-tighter opacity-40 uppercase">Iconic Routes</span>
+    </div>
+    <div class="description-box max-w-xl">
+        <p class="text-base text-white/70 font-light">全球经典徒步路线档案，点击进入专属探索页面。</p>
+    </div>
+    <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b" class="nav-img-preview">
+</a>
+
+        <div class="nav-item group">
+            <div class="flex flex-col md:flex-row md:items-baseline gap-6">
+                <h2 class="text-5xl md:text-7xl font-bold uppercase">巅峰</h2>
+                <span class="text-xl md:text-2xl neon-text font-light tracking-tighter opacity-40 uppercase">Peak Series</span>
             </div>
-            <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b" class="nav-img">
+            <div class="description-box max-w-xl">
+                <p class="text-base text-white/70 font-light">已收集川滇藏18座四千米级以上雪山，将大地的灵魂转化为掌中艺术。</p>
+            </div>
+            <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba" class="nav-img-preview">
         </div>
 
-        <div class="nav-item group py-20" onclick="showDetail('peak')">
-            <div class="flex flex-col">
-                <span class="text-[10px] neon-text mb-3 tracking-[0.5em]">02 / COLLECTION</span>
-                <h2 class="text-5xl md:text-8xl font-bold uppercase">巅峰系列</h2>
-                <div class="description max-w-xl">
-                    <p class="text-sm opacity-60 leading-relaxed mb-3">已收集 18 座四千米级雪山，通过插画重构收藏山脉灵魂。</p>
-                    <p class="eng-sub !tracking-widest">Digitally reconstructed peak series products.</p>
-                </div>
+        <div class="nav-item group">
+            <div class="flex flex-col md:flex-row md:items-baseline gap-6">
+                <h2 class="text-5xl md:text-7xl font-bold uppercase">其他</h2>
+                <span class="text-xl md:text-2xl neon-text font-light tracking-tighter opacity-40 uppercase">Experiment</span>
             </div>
-            <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba" class="nav-img">
-        </div>
-
-        <div class="nav-item group py-20" onclick="showDetail('other')">
-            <div class="flex flex-col">
-                <span class="text-[10px] neon-text mb-3 tracking-[0.5em]">03 / EXPERIMENT</span>
-                <h2 class="text-5xl md:text-8xl font-bold uppercase">其他设计</h2>
-                <div class="description max-w-xl">
-                    <p class="text-sm opacity-60 leading-relaxed mb-3">品牌视觉实验、AR 交互项目及 DinoHH 的更多探索。</p>
-                    <p class="eng-sub !tracking-widest">Brand experiments and more explorations.</p>
-                </div>
+            <div class="description-box max-w-xl">
+                <p class="text-base text-white/70 font-light">品牌视觉实验、AR 交互与更多户外生活方式的探索。</p>
             </div>
-            <img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e" class="nav-img">
+            <img src="https://images.unsplash.com/photo-1551524164-687a55ea1110" class="nav-img-preview">
         </div>
-
     </section>
 
     <script>
-        function openOverlay(id) { document.getElementById(id).classList.add('active'); }
-        function closeAllOverlays() { 
-            document.querySelectorAll('.full-overlay').forEach(el => el.classList.remove('active'));
+        function toggleOverlay(id) { document.getElementById(id).classList.toggle('active'); }
+
+        // --- 鼠标自发光跟随逻辑 ---
+        const cursor = document.querySelector('#custom-cursor');
+        let mX = 0, mY = 0, cX = 0, cY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            mX = e.clientX; mY = e.clientY;
+            const isHover = e.target.closest('a') || e.target.closest('.nav-item') || e.target.closest('.logo-btn') || e.target.closest('button');
+            isHover ? cursor.classList.add('cursor-active') : cursor.classList.remove('cursor-active');
+        });
+
+        function animateCursor() {
+            cX += (mX - cX) * 0.12; cY += (mY - cY) * 0.12;
+            cursor.style.transform = `translate3d(${cX}px, ${cY}px, 0)`;
+            requestAnimationFrame(animateCursor);
         }
+        animateCursor();
 
-        const contentData = {
-            hike: {
-                tag: 'Archive 01', title: '此生必徒', sub: 'The Must-Hike List',
-                items: [
-                    { name: '雨崩', desc: '天堂在左 雨崩在右', img: 'https://images.unsplash.com/photo-1544198365-f5d60b6d8190' },
-                    { name: '虎跳峡', desc: '世界十大景点徒步路线', img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b' }
-                ]
-            },
-            peak: {
-                tag: 'Collection 02', title: '巅峰系列', sub: 'Peak Products',
-                items: [
-                    { name: '珠卡瓦格博', desc: '6740M / 梅里/太子雪山 主峰', img: 'https://images.unsplash.com/photo-1519681393784-d120267933ba' },
-                    { name: '冈仁波齐', desc: '6656M / 世界中心', img: 'https://images.unsplash.com/photo-1544923246-77307dd654ca' }
-                ]
-            },
-            other: {
-                tag: 'Other 03', title: '其他设计', sub: 'Explorations',
-                items: [
-                    { name: 'AR Interaction', desc: '增强现实徒步计划', img: 'https://images.unsplash.com/photo-1589412225893-9913ec0b5551' },
-                    { name: 'Identity Design', desc: 'DinoHH 品牌视觉研究', img: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e' }
-                ]
-            }
-        };
+        // --- Three.js 地形与近景侧峰 ---
+        let scene, camera, renderer, terrainPoints;
+        const simplex = new SimplexNoise();
+        const initialZ = [];
 
-        function showDetail(key) {
-            const data = contentData[key];
-            if(!data) return;
-            document.getElementById('detail-tag').innerText = data.tag;
-            document.getElementById('detail-title').innerText = data.title;
-            document.getElementById('detail-sub').innerText = data.sub;
-            const container = document.getElementById('detail-content');
-            container.innerHTML = data.items.map(item => `
-                <div class="border border-white/5 p-6 bg-zinc-900/20 group hover:border-neon-green/30 transition-all">
-                    <img src="${item.img}" class="w-full h-72 object-cover mb-6 grayscale group-hover:grayscale-0 transition-all duration-700">
-                    <h3 class="text-2xl font-bold mb-2">${item.name}</h3>
-                    <p class="text-xs opacity-40 uppercase tracking-widest">${item.desc}</p>
-                </div>
-            `).join('');
-            openOverlay('detail-overlay');
-        }
-
-        let scene, camera, renderer, points;
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             document.getElementById('canvas-container').appendChild(renderer.domElement);
-            const geometry = new THREE.PlaneGeometry(30, 30, 80, 80);
-            const material = new THREE.PointsMaterial({ color: 0xc1ff72, size: 0.02, transparent: true, opacity: 0.25 });
+
+            const geometry = new THREE.PlaneGeometry(100, 100, 180, 180);
             const vertices = geometry.attributes.position.array;
             for (let i = 0; i < vertices.length; i += 3) {
-                const x = vertices[i] * 0.3; const y = vertices[i+1] * 0.3;
-                vertices[i+2] = (Math.sin(x) * Math.cos(y) + Math.sin(x * 2.1) * 0.5) * 1.8;
+                const x = vertices[i], y = vertices[i+1];
+                let z = 0, strength = 14.0, freq = 0.05;
+                for(let j=0; j<3; j++) {
+                    z += simplex.noise2D(x * freq, y * freq) * strength;
+                    strength *= 0.35; freq *= 2.8; // 增加对比度，线条更明显
+                }
+                initialZ.push(z); vertices[i+2] = z;
             }
-            points = new THREE.Points(geometry, material);
-            points.rotation.x = -Math.PI / 3; scene.add(points);
-            camera.position.z = 6; camera.position.y = 3;
+            geometry.attributes.position.needsUpdate = true;
+
+            terrainPoints = new THREE.Points(geometry, new THREE.PointsMaterial({
+                color: 0xc1ff72, size: 0.035, transparent: true, opacity: 0.3, sizeAttenuation: true
+            }));
+            
+            terrainPoints.rotation.x = -Math.PI / 2.2;
+            terrainPoints.position.set(-8, -2, -10); // 侧峰近景偏置
+            scene.add(terrainPoints);
+
+            camera.position.set(0, 1.2, 12);
+            camera.lookAt(0, 6, -10);
         }
-        function animate() {
-            requestAnimationFrame(animate); points.rotation.z += 0.0008;
-            const time = Date.now() * 0.0005; const pos = points.geometry.attributes.position.array;
-            for (let i = 0; i < pos.length; i += 3) { pos[i+2] += Math.sin(time + pos[i] * 0.5) * 0.0015; }
-            points.geometry.attributes.position.needsUpdate = true;
+
+        let bgX = 0, bgY = 0;
+        function animateScene() {
+            requestAnimationFrame(animateScene);
+            const time = Date.now() * 0.00025;
+            const v = terrainPoints.geometry.attributes.position.array;
+            for (let i = 0; i < v.length; i += 3) {
+                const idx = i/3;
+                v[i+2] = initialZ[idx] * (1 + Math.sin(time + initialZ[idx] * 0.15) * 0.08);
+            }
+            terrainPoints.geometry.attributes.position.needsUpdate = true;
+            bgX += ((mX/window.innerWidth - 0.5) - bgX) * 0.05;
+            bgY += ((mY/window.innerHeight - 0.5) - bgY) * 0.05;
+            terrainPoints.position.x = -8 + bgX * 3;
+            terrainPoints.position.y = -2 + (bgY * 1.2);
             renderer.render(scene, camera);
         }
+
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-        init(); animate();
+
+        init(); animateScene();
     </script>
 </body>
 </html>
